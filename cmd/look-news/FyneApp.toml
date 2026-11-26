@@ -1,0 +1,8 @@
+Website = "https://look-news.clema.dev"
+
+[Details]
+Icon = "../../internal/app/assets/icon.png"
+Name = "Look News"
+ID = "com.clema.looknews"
+Version = "2.0.0"
+Build = 4
