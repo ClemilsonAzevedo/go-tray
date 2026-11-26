@@ -4,5 +4,5 @@ Website = "https://look-news.clema.dev"
 Icon = "../../internal/app/assets/icon.png"
 Name = "Look News"
 ID = "com.clema.looknews"
-Version = "2.0.0"
-Build = 4
+Version = "2026.11.26"
+Build = 1

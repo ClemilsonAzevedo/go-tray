@@ -7,7 +7,7 @@ import (
 
 const (
 	appName    = "look news"
-	appVersion = "1.0.0"
+	appVersion = "2026.11.26"
 	sourcesKey = "sources"
 )
 
