@@ -18,7 +18,7 @@ Execute este comando no Terminal:
 curl -fsSL https://raw.githubusercontent.com/ClemilsonAzevedo/go-tray/main/install.sh | bash
 ```
 
-O instalador identifica a arquitetura do Mac, baixa o pacote correspondente da última [release](https://github.com/ClemilsonAzevedo/go-tray/releases), verifica o SHA-256 e instala o app em `Aplicativos`. Se não puder gravar em `/Applications`, instala em `~/Applications`. Não é necessário clonar o repositório nem compilar o app.
+Antes de clonar ou instalar qualquer coisa, o instalador verifica se o Mac tem Git, Go `1.27.4` ou posterior e as ferramentas de linha de comando do Xcode com o compilador Clang. Se faltar algum requisito, informa como instalá-lo e encerra sem alterar o app instalado; depois, execute novamente o comando acima. Com os requisitos atendidos, identifica a versão existente, clona o código-fonte, compila um bundle nativo e o abre ao terminar. O app é instalado em `/Applications` ou, se essa pasta não puder ser gravada, em `~/Applications`. Não é necessária uma conta de desenvolvedor Apple.
 
 ### Instalação manual
 
@@ -26,7 +26,7 @@ O instalador identifica a arquitetura do Mac, baixa o pacote correspondente da �
 2. Para usar o DMG, abra-o e arraste `Look News.app` para `Aplicativos`. Para usar o ZIP, descompacte-o e arraste o app para a mesma pasta.
 3. Abra o app; o ícone aparecerá na barra de menus.
 
-Cada release inclui builds nativos para Apple Silicon (`arm64`) e Intel (`x86_64`), nos formatos `.dmg` e `.zip`. O instalador pelo Terminal baixa o ZIP compatível com a arquitetura do Mac e verifica o SHA-256.
+Cada release inclui builds nativos para Apple Silicon (`arm64`) e Intel (`x86_64`), nos formatos `.dmg` e `.zip`.
 
 Como o app não é assinado nem notarizado, o macOS pode exibir um aviso na primeira abertura. Se isso acontecer, clique no app com o botão direito (ou `Control` + clique), escolha **Abrir** e confirme.
 
