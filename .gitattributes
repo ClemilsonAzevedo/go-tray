@@ -1,0 +1,4 @@
+# Keep repository language statistics focused on the Go application.
+*.go linguist-language=Go linguist-detectable=true
+makefile linguist-detectable=false
+install.sh linguist-detectable=false
