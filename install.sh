@@ -4,7 +4,7 @@ set -Eeuo pipefail
 REPO_URL="https://github.com/ClemilsonAzevedo/go-tray.git"
 APP_NAME="Look News"
 BUNDLE_ID="com.clema.looknews"
-MIN_GO_VERSION="1.27.4"
+MIN_GO_VERSION="1.26.0"
 SYSTEM_APP="/Applications/${APP_NAME}.app"
 USER_APP="${HOME}/Applications/${APP_NAME}.app"
 WORK_DIR=""
@@ -89,7 +89,7 @@ if command -v go >/dev/null 2>&1; then
     GO_MAJOR=${BASH_REMATCH[1]}
     GO_MINOR=${BASH_REMATCH[2]}
     GO_PATCH=${BASH_REMATCH[4]:-0}
-    if (( GO_MAJOR < 1 || (GO_MAJOR == 1 && GO_MINOR < 27) || (GO_MAJOR == 1 && GO_MINOR == 27 && GO_PATCH < 4) )); then
+    if (( GO_MAJOR < 1 || (GO_MAJOR == 1 && GO_MINOR < 26) )); then
       printf '  ✗ Go %s encontrado; o projeto requer Go %s ou posterior.\n' "$GO_VERSION_NUMBER" "$MIN_GO_VERSION" >&2
       printf '    Atualize o Go em: https://go.dev/dl/\n' >&2
       MISSING_PREREQUISITES=1

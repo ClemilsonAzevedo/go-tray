@@ -1,6 +1,6 @@
 module github.com/clemilsonazevedo/look-news/go-tray
 
-go 1.27.4
+go 1.26.0
 
 require fyne.io/fyne/v2 v2.8.3
 
