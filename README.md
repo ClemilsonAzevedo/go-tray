@@ -1,12 +1,8 @@
-<p style="text-align: center;">
-  <img src="internal/app/assets/icon.png" alt="Ícone do Look News" style="width: 180px;" />
-</p>
-
-<h1 style="text-align: center;">Look News — System Tray</h1>
-
-<p style="text-align: center;">
-  Agregador de notícias RSS na barra de menus do macOS.
-</p>
+<div align="center">
+  <img src="internal/app/assets/icon.png" alt="Ícone do Look News" width="180" />
+  <h1>Look News — System Tray</h1>
+  <p>Agregador de notícias RSS na barra de menus do macOS.</p>
+</div>
 
 ## Instalação
 
@@ -18,7 +14,7 @@ Execute este comando no Terminal:
 curl -fsSL https://raw.githubusercontent.com/ClemilsonAzevedo/go-tray/main/install.sh | bash
 ```
 
-Antes de clonar ou instalar qualquer coisa, o instalador verifica se o Mac tem Git, Go `1.27.4` ou posterior e as ferramentas de linha de comando do Xcode com o compilador Clang. Se faltar algum requisito, informa como instalá-lo e encerra sem alterar o app instalado; depois, execute novamente o comando acima. Com os requisitos atendidos, identifica a versão existente, clona o código-fonte, compila um bundle nativo e o abre ao terminar. O app é instalado em `/Applications` ou, se essa pasta não puder ser gravada, em `~/Applications`. Não é necessária uma conta de desenvolvedor Apple.
+Antes de clonar ou instalar qualquer coisa, o instalador verifica se o Mac tem Git, Go `1.26.0` ou posterior e as ferramentas de linha de comando do Xcode com o compilador Clang. Se faltar algum requisito, informa como instalá-lo e encerra sem alterar o app instalado; depois, execute novamente o comando acima. Com os requisitos atendidos, identifica a versão existente, clona o código-fonte, compila um bundle nativo e o abre ao terminar. O app é instalado em `/Applications` ou, se essa pasta não puder ser gravada, em `~/Applications`. Não é necessária uma conta de desenvolvedor Apple.
 
 ### Instalação manual
 
