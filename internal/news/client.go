@@ -10,14 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"slices"
 	"strings"
 	"time"
 )
 
 const (
 	defaultAPIURL              = "https://look-news-api.onrender.com"
-	defaultCriterion           = "Ciência, tecnologia, startups e investimentos"
 	requestTimeout             = 90 * time.Second
 	maximumErrorResponseLength = 1 << 20
 )
@@ -39,27 +37,21 @@ type apiErrorItem struct {
 // Client calls the Look News API and validates RSS feed URLs.
 type Client struct {
 	baseURL    string
-	criterion  string
 	httpClient *http.Client
+	cache      httpResponseCache
 }
 
 var _ Service = (*Client)(nil)
 
-// NewClient creates an API client using the configured backend and criterion.
+// NewClient creates an API client using the configured backend.
 func NewClient() *Client {
 	baseURL := strings.TrimSpace(os.Getenv("LOOK_NEWS_BACKEND_URL"))
 	if baseURL == "" {
 		baseURL = defaultAPIURL
 	}
 
-	criterion := strings.TrimSpace(os.Getenv("LOOK_NEWS_CRITERION"))
-	if criterion == "" {
-		criterion = defaultCriterion
-	}
-
 	return &Client{
-		baseURL:   strings.TrimRight(baseURL, "/"),
-		criterion: criterion,
+		baseURL: strings.TrimRight(baseURL, "/"),
 		httpClient: &http.Client{
 			Timeout: requestTimeout,
 		},
@@ -82,7 +74,6 @@ func (c *Client) FetchArticles(ctx context.Context, sources []string) (Response,
 
 	endpoint := baseURL.JoinPath("news")
 	query := endpoint.Query()
-	query.Set("criterion", c.criterion)
 	for _, source := range sources {
 		query.Add("sources", source)
 	}
@@ -91,38 +82,7 @@ func (c *Client) FetchArticles(ctx context.Context, sources []string) (Response,
 	requestContext, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(requestContext, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return Response{}, fmt.Errorf("criar requisição de notícias: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return Response{}, fmt.Errorf("buscar notícias: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(io.LimitReader(resp.Body, maximumErrorResponseLength))
-		if err == nil {
-			if detail := apiErrorMessage(body); detail != "" {
-				return Response{}, fmt.Errorf("API de notícias respondeu %s: %s", resp.Status, detail)
-			}
-		}
-		return Response{}, fmt.Errorf("API de notícias respondeu %s", resp.Status)
-	}
-
-	response, err := decodeJSON[Response](resp.Body)
-	if err != nil {
-		return Response{}, fmt.Errorf("decodificar resposta da API de notícias: %w", err)
-	}
-	if response.Articles == nil {
-		response.Articles = []Article{}
-	}
-	slices.SortStableFunc(response.Articles, func(a, b Article) int {
-		return b.Date.Compare(a.Date)
-	})
-	return response, nil
+	return c.fetchArticles(requestContext, endpoint.String())
 }
 
 func apiErrorMessage(body []byte) string {

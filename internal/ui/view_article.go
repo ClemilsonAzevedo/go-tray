@@ -32,18 +32,22 @@ const (
 )
 
 func articleRow(article news.Article, open func(string)) fyne.CanvasObject {
+	return articleRowForVariant(article, open, currentThemeVariant())
+}
+
+func articleRowForVariant(article news.Article, open func(string), variant fyne.ThemeVariant) fyne.CanvasObject {
 	source := strings.ToUpper(plainText(article.Source))
-	updated := metadataText(ago(articleTime(article)), 10, false, articleMetadataSecondaryColorName)
+	updated := metadataTextForVariant(ago(articleTime(article)), 10, false, articleMetadataSecondaryColorName, variant)
 	sourceWidth := articleTextWidth - updated.MinSize().Width - 2*articleHeaderSpacing - articleMetadataDotSize
-	sourceText := clampedText(source, sourceWidth, articleSourceTextSize, systemColor(articleAccentColorName), fyne.TextStyle{Bold: true})
-	dot := canvas.NewCircle(systemColor(articleMetadataTertiaryColorName))
+	sourceText := clampedText(source, sourceWidth, articleSourceTextSize, systemColorForVariant(articleAccentColorName, variant), fyne.TextStyle{Bold: true})
+	dot := canvas.NewCircle(systemColorForVariant(articleMetadataTertiaryColorName, variant))
 	dotIcon := container.NewCenter(container.NewGridWrap(fyne.NewSize(articleMetadataDotSize, articleMetadataDotSize), dot))
 	header := container.New(layout.NewCustomPaddedHBoxLayout(articleHeaderSpacing), sourceText, dotIcon, updated)
-	title := clampedText(plainText(article.Title), articleTextWidth, articleTitleTextSize, systemColor(theme.ColorNameForeground), fyne.TextStyle{Bold: true})
-	summary := clampedText(plainText(article.Summary), articleTextWidth, articleSummaryTextSize, systemColor(articleSummaryColorName), fyne.TextStyle{})
+	title := clampedText(plainText(article.Title), articleTextWidth, articleTitleTextSize, systemColorForVariant(theme.ColorNameForeground, variant), fyne.TextStyle{Bold: true})
+	summary := clampedText(plainText(article.Summary), articleTextWidth, articleSummaryTextSize, systemColorForVariant(articleSummaryColorName, variant), fyne.TextStyle{})
 	body := container.New(layout.NewCustomPaddedVBoxLayout(2), header, title, summary)
 
-	background := canvas.NewRectangle(cardColor())
+	background := canvas.NewRectangle(systemColorForVariant(theme.ColorNameBackground, variant))
 	background.CornerRadius = 10
 	card := container.NewStack(
 		background,
@@ -78,8 +82,8 @@ func articleTime(article news.Article) time.Time {
 	if !article.Date.IsZero() {
 		return article.Date
 	}
-	for _, layout := range []string{time.RFC1123Z, time.RFC1123, time.RFC822Z, time.RFC822, time.RFC3339} {
-		if parsed, err := time.Parse(layout, article.Published); err == nil {
+	for _, dateLayout := range []string{time.RFC1123Z, time.RFC1123, time.RFC822Z, time.RFC822, time.RFC3339} {
+		if parsed, err := time.Parse(dateLayout, article.Published); err == nil {
 			return parsed
 		}
 	}

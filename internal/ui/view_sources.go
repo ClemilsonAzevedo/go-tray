@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/clemilsonazevedo/look-news/go-tray/internal/news"
 )
@@ -18,6 +19,7 @@ type sourcesView struct {
 	client    news.Service
 	onChange  func()
 	rows      *fyne.Container
+	heading   *canvas.Text
 	entry     *widget.Entry
 	status    *widget.Label
 	addButton *widget.Button
@@ -45,11 +47,11 @@ func newSourcesView(app fyne.App, client news.Service, onChange func()) *sources
 }
 
 func (v *sourcesView) content() fyne.CanvasObject {
-	heading := canvas.NewText("Fontes RSS", textMain())
-	heading.TextSize = 14
-	heading.TextStyle = fyne.TextStyle{Bold: true}
+	v.heading = canvas.NewText("Fontes RSS", textMain())
+	v.heading.TextSize = 14
+	v.heading.TextStyle = fyne.TextStyle{Bold: true}
 	form := container.New(layout.NewCustomPaddedVBoxLayout(8),
-		heading,
+		v.heading,
 		container.NewBorder(nil, nil, nil, v.addButton, v.entry),
 	)
 	top := container.New(layout.NewCustomPaddedLayout(8, 0, 12, 12),
@@ -57,6 +59,15 @@ func (v *sourcesView) content() fyne.CanvasObject {
 	)
 	sourceList := container.New(layout.NewCustomPaddedLayout(0, 8, 12, 12), container.NewVScroll(v.rows))
 	return container.NewBorder(top, nil, nil, nil, sourceList)
+}
+
+func (v *sourcesView) refreshTheme(variant fyne.ThemeVariant) {
+	v.heading.Color = systemColorForVariant(theme.ColorNameForeground, variant)
+	v.heading.Refresh()
+	v.entry.Refresh()
+	v.status.Refresh()
+	v.addButton.Refresh()
+	v.rows.Refresh()
 }
 
 func (v *sourcesView) rebuildSources() {

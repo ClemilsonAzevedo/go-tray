@@ -16,6 +16,7 @@ type Article struct {
 
 // Response contains the articles and result count returned by the API.
 type Response struct {
-	Articles []Article `json:"articles"`
-	Total    int       `json:"total"`
+	Articles  []Article `json:"articles"`
+	FetchedAt time.Time `json:"-"`
+	Total     int       `json:"total"`
 }

@@ -40,14 +40,64 @@ func TestThemeHidesScrollBarsAndBuiltInShadows(t *testing.T) {
 func TestArticleThemeColors(t *testing.T) {
 	for _, variant := range []fyne.ThemeVariant{theme.VariantLight, theme.VariantDark} {
 		source := NewTheme().Color(articleAccentColorName, variant)
-		if got := color.NRGBAModel.Convert(source).(color.NRGBA); got != (color.NRGBA{R: 0xED, G: 0xB2, B: 0x99, A: 0xFF}) {
-			t.Errorf("article source color for variant %v = %v, want #EDB299", variant, got)
+		expectedPeach := color.NRGBA{R: 0xE8, G: 0xAA, B: 0x90, A: 0xFF}
+		if variant == theme.VariantDark {
+			expectedPeach = color.NRGBA{R: 0xED, G: 0xB2, B: 0x99, A: 0xFF}
+		}
+		if got := color.NRGBAModel.Convert(source).(color.NRGBA); got != expectedPeach {
+			t.Errorf("article source color for variant %v = %v, want %v", variant, got, expectedPeach)
 		}
 
 		summary := NewTheme().Color(articleSummaryColorName, variant)
 		secondary := NewTheme().Color(articleMetadataSecondaryColorName, variant)
-		if got, want := color.NRGBAModel.Convert(summary).(color.NRGBA), color.NRGBAModel.Convert(secondary).(color.NRGBA); got != want {
-			t.Errorf("article summary color for variant %v = %v, want metadata secondary color %v", variant, got, want)
+		expectedSummary := color.NRGBA{A: 0x8C}
+		expectedSecondary := color.NRGBA{R: 0x63, G: 0x5B, B: 0x55, A: 0xFF}
+		if variant == theme.VariantDark {
+			expectedSummary = color.NRGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0x99}
+			expectedSecondary = expectedSummary
+		}
+		if got := color.NRGBAModel.Convert(summary).(color.NRGBA); got != expectedSummary {
+			t.Errorf("article summary color for variant %v = %v, want %v", variant, got, expectedSummary)
+		}
+		if got := color.NRGBAModel.Convert(secondary).(color.NRGBA); got != expectedSecondary {
+			t.Errorf("metadata secondary color for variant %v = %v, want %v", variant, got, expectedSecondary)
+		}
+		tertiary := NewTheme().Color(articleMetadataTertiaryColorName, variant)
+		expectedTertiary := color.NRGBA{A: 0x59}
+		if variant == theme.VariantDark {
+			expectedTertiary = color.NRGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0x61}
+		}
+		if got := color.NRGBAModel.Convert(tertiary).(color.NRGBA); got != expectedTertiary {
+			t.Errorf("article tertiary color for variant %v = %v, want %v", variant, got, expectedTertiary)
+		}
+		status := NewTheme().Color(statusMetadataColorName, variant)
+		expectedStatus := color.NRGBA{R: 0x78, G: 0x70, B: 0x6A, A: 0xFF}
+		if variant == theme.VariantDark {
+			expectedStatus = expectedTertiary
+		}
+		if got := color.NRGBAModel.Convert(status).(color.NRGBA); got != expectedStatus {
+			t.Errorf("status metadata color for variant %v = %v, want %v", variant, got, expectedStatus)
+		}
+	}
+}
+
+func TestThemeIconsFollowVariant(t *testing.T) {
+	for _, test := range []struct {
+		variant fyne.ThemeVariant
+		light   fyne.Resource
+		dark    fyne.Resource
+	}{
+		{theme.VariantLight, icEyeLight, icEye},
+		{theme.VariantDark, icEyeLight, icEye},
+		{theme.VariantLight, icInfoLight, icInfo},
+		{theme.VariantDark, icInfoLight, icInfo},
+	} {
+		want := test.dark
+		if test.variant == theme.VariantLight {
+			want = test.light
+		}
+		if got := themeIcon(test.variant, test.light, test.dark).Name(); got != want.Name() {
+			t.Errorf("icon for variant %v = %q, want %q", test.variant, got, want.Name())
 		}
 	}
 }
@@ -55,7 +105,11 @@ func TestArticleThemeColors(t *testing.T) {
 func TestPrimaryActionUsesPeachWithReadableForeground(t *testing.T) {
 	for _, variant := range []fyne.ThemeVariant{theme.VariantLight, theme.VariantDark} {
 		primary := color.NRGBAModel.Convert(NewTheme().Color(theme.ColorNamePrimary, variant)).(color.NRGBA)
-		if primary != (color.NRGBA{R: 0xED, G: 0xB2, B: 0x99, A: 0xFF}) {
+		expectedPeach := color.NRGBA{R: 0xE8, G: 0xAA, B: 0x90, A: 0xFF}
+		if variant == theme.VariantDark {
+			expectedPeach = color.NRGBA{R: 0xED, G: 0xB2, B: 0x99, A: 0xFF}
+		}
+		if primary != expectedPeach {
 			t.Errorf("primary color for variant %v = %v, want peach", variant, primary)
 		}
 		foreground := color.NRGBAModel.Convert(NewTheme().Color(theme.ColorNameForegroundOnPrimary, variant)).(color.NRGBA)

@@ -6,8 +6,11 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	fyneTest "fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"github.com/clemilsonazevedo/look-news/go-tray/internal/news"
 )
 
@@ -71,4 +74,68 @@ func TestShowMessageInvalidatesRenderedArticles(t *testing.T) {
 	if sameArticles(view.rendered, []news.Article{article}) {
 		t.Fatal("a message should invalidate the previously rendered articles")
 	}
+}
+
+func TestNewsViewRefreshThemeRebuildsExistingArticles(t *testing.T) {
+	app := fyneTest.NewApp()
+	t.Cleanup(app.Quit)
+	app.Settings().SetTheme(NewTheme())
+
+	article := news.Article{Source: "Example", Title: "Story", Summary: "Description"}
+	view := &newsView{
+		app:        app,
+		content:    container.NewVBox(),
+		list:       container.NewVBox(),
+		title:      canvas.NewText("look news", color.Black),
+		brandIcon:  widget.NewIcon(icEye),
+		count:      canvas.NewText("1 artigo", color.Black),
+		footerDot:  canvas.NewText("·", color.Black),
+		updated:    canvas.NewText("atualizado agora", color.Black),
+		infoButton: widget.NewButtonWithIcon("", icInfo, nil),
+		separators: []*canvas.Rectangle{canvas.NewRectangle(color.Black)},
+		topShadow:  newListTopShadow(),
+	}
+	view.showArticlesForVariant([]news.Article{article}, theme.VariantLight)
+	oldRow := view.list.Objects[0]
+
+	view.refreshTheme(theme.VariantDark)
+
+	if view.list.Objects[0] == oldRow {
+		t.Fatal("theme refresh should rebuild existing article cards")
+	}
+	if got, want := view.brandIcon.Resource.Name(), icEye.Name(); got != want {
+		t.Errorf("brand icon = %q, want %q", got, want)
+	}
+	if got, want := view.infoButton.Icon.Name(), icInfo.Name(); got != want {
+		t.Errorf("about icon = %q, want %q", got, want)
+	}
+
+	source := findCanvasText(view.list.Objects[0], "EXAMPLE")
+	if source == nil {
+		t.Fatal("rebuilt article source text was not found")
+	}
+	wantColor := color.NRGBAModel.Convert(NewTheme().Color(articleAccentColorName, theme.VariantDark)).(color.NRGBA)
+	if got := color.NRGBAModel.Convert(source.Color).(color.NRGBA); got != wantColor {
+		t.Errorf("article source color = %v, want %v", got, wantColor)
+	}
+	if !sameArticles(view.rendered, []news.Article{article}) {
+		t.Errorf("theme refresh changed rendered article data: %v", view.rendered)
+	}
+}
+
+func findCanvasText(object fyne.CanvasObject, text string) *canvas.Text {
+	if current, ok := object.(*canvas.Text); ok && current.Text == text {
+		return current
+	}
+	if current, ok := object.(*fyne.Container); ok {
+		for _, child := range current.Objects {
+			if found := findCanvasText(child, text); found != nil {
+				return found
+			}
+		}
+	}
+	if current, ok := object.(*tappable); ok {
+		return findCanvasText(current.content, text)
+	}
+	return nil
 }

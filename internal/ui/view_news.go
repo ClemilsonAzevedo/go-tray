@@ -23,14 +23,23 @@ import (
 type newsView struct {
 	app           fyne.App
 	client        news.Service
+	content       *fyne.Container
 	list          *fyne.Container
+	title         *canvas.Text
+	brandIcon     *widget.Icon
 	count         *canvas.Text
+	footerDot     *canvas.Text
 	updated       *canvas.Text
+	infoButton    *widget.Button
+	separators    []*canvas.Rectangle
+	topShadow     *canvas.LinearGradient
 	refreshButton *toolbarButton
 	rendered      []news.Article
+	message       string
 	lastUpdated   time.Time
 	lastAttempt   time.Time
 	loading       bool
+	scrolled      bool
 }
 
 func newNewsContent(a fyne.App, client news.Service) *fyne.Container {
@@ -39,20 +48,21 @@ func newNewsContent(a fyne.App, client news.Service) *fyne.Container {
 		client:  client,
 		list:    container.New(layout.NewCustomPaddedVBoxLayout(4)),
 		count:   metadataText("0 artigos", 11, false, articleMetadataSecondaryColorName),
-		updated: metadataText("", 11, false, articleMetadataTertiaryColorName),
+		updated: metadataText("", 11, false, statusMetadataColorName),
 	}
 
-	title := canvas.NewText("look news", textMain())
-	title.TextSize = 14
-	title.TextStyle = fyne.TextStyle{Bold: true}
+	view.title = canvas.NewText("look news", textMain())
+	view.title.TextSize = 14
+	view.title.TextStyle = fyne.TextStyle{Bold: true}
 
 	view.refreshButton = newToolbarButton(icRefresh, false, view.refresh)
 	view.refreshButton.setIconFrames(refreshIconFrames())
+	view.brandIcon = widget.NewIcon(themeIcon(a.Settings().ThemeVariant(), icEyeLight, icEye))
 	brand := container.New(layout.NewCustomPaddedHBoxLayout(6),
 		container.New(layout.NewCustomPaddedLayout(4, 0, 0, 0),
-			container.NewGridWrap(fyne.NewSize(20, 20), widget.NewIcon(icEye)),
+			container.NewGridWrap(fyne.NewSize(20, 20), view.brandIcon),
 		),
-		title,
+		view.title,
 	)
 	actions := container.New(layout.NewCustomPaddedHBoxLayout(8),
 		view.refreshButton,
@@ -63,40 +73,75 @@ func newNewsContent(a fyne.App, client news.Service) *fyne.Container {
 		container.New(layout.NewCustomPaddedHBoxLayout(0), brand, layout.NewSpacer(), actions),
 	)
 
+	view.footerDot = metadataText("·", 11, false, statusMetadataColorName)
+	view.infoButton = iconButton(themeIcon(a.Settings().ThemeVariant(), icInfoLight, icInfo), func() { showAboutWindow(a) })
 	footer := container.New(layout.NewCustomPaddedLayout(6, 6, 14, 14),
 		container.New(layout.NewCustomPaddedHBoxLayout(10),
 			view.count,
-			metadataText("·", 11, false, articleMetadataTertiaryColorName),
+			view.footerDot,
 			view.updated,
 			layout.NewSpacer(),
-			iconButton(icInfo, func() { showAboutWindow(a) }),
+			view.infoButton,
 		),
 	)
 	separator := func() fyne.CanvasObject {
 		line := canvas.NewRectangle(lineColor())
 		line.SetMinSize(fyne.NewSize(1, 1))
+		view.separators = append(view.separators, line)
 		return line
 	}
 	scroll := container.NewVScroll(container.New(layout.NewCustomPaddedLayout(4, 4, 6, 6), view.list))
-	topShadow := newListTopShadow()
+	view.topShadow = newListTopShadow()
 	scroll.OnScrolled = func(offset fyne.Position) {
-		updateListTopShadow(topShadow, offset)
+		view.scrolled = offset.Y > 0
+		updateListTopShadow(view.topShadow, offset)
 	}
 	scrolledList := container.NewStack(
 		scroll,
-		container.NewBorder(topShadow, nil, nil, nil, nil),
+		container.NewBorder(view.topShadow, nil, nil, nil, nil),
 	)
 
-	content := container.NewBorder(
+	view.content = container.NewBorder(
 		container.NewVBox(header, separator()),
 		container.NewVBox(separator(), footer),
 		nil,
 		nil,
 		scrolledList,
 	)
+	observeTheme(a, func(variant fyne.ThemeVariant) {
+		view.refreshTheme(variant)
+		refreshAuxiliaryWindowsTheme(variant)
+	})
 	view.refresh()
 	view.startPolling()
-	return content
+	return view.content
+}
+
+func (v *newsView) refreshTheme(variant fyne.ThemeVariant) {
+	v.title.Color = systemColorForVariant(theme.ColorNameForeground, variant)
+	v.title.Refresh()
+	v.brandIcon.SetResource(themeIcon(variant, icEyeLight, icEye))
+	v.count.Color = systemColorForVariant(articleMetadataSecondaryColorName, variant)
+	v.count.Refresh()
+	v.footerDot.Color = systemColorForVariant(statusMetadataColorName, variant)
+	v.footerDot.Refresh()
+	v.updated.Color = systemColorForVariant(statusMetadataColorName, variant)
+	v.updated.Refresh()
+	v.infoButton.SetIcon(themeIcon(variant, icInfoLight, icInfo))
+	for _, line := range v.separators {
+		line.FillColor = systemColorForVariant(theme.ColorNameInputBorder, variant)
+		line.Refresh()
+	}
+	updateListTopShadowForVariant(v.topShadow, v.scrolled, variant)
+
+	if len(v.rendered) > 0 {
+		articles := slices.Clone(v.rendered)
+		v.rendered = nil
+		v.showArticlesForVariant(articles, variant)
+	} else if v.message != "" {
+		v.showMessage(v.message)
+	}
+	v.content.Refresh()
 }
 
 func (v *newsView) refresh() {
@@ -126,10 +171,14 @@ func (v *newsView) refresh() {
 	go func() {
 		response, err := v.client.FetchArticles(context.Background(), sources)
 		if err == nil {
+			updated := response.FetchedAt
+			if updated.IsZero() {
+				updated = time.Now()
+			}
 			snapshot = articleSnapshot{
 				Articles: response.Articles,
 				Total:    response.Total,
-				Updated:  time.Now(),
+				Updated:  updated,
 			}
 		}
 		fyne.Do(func() {
@@ -153,10 +202,16 @@ func newListTopShadow() *canvas.LinearGradient {
 }
 
 func updateListTopShadow(shadow *canvas.LinearGradient, offset fyne.Position) {
-	if offset.Y > 0 {
-		shadow.StartColor = color.NRGBA{A: 0x24}
-	} else {
+	updateListTopShadowForVariant(shadow, offset.Y > 0, currentThemeVariant())
+}
+
+func updateListTopShadowForVariant(shadow *canvas.LinearGradient, scrolled bool, variant fyne.ThemeVariant) {
+	if !scrolled {
 		shadow.StartColor = color.Transparent
+	} else if variant == theme.VariantDark {
+		shadow.StartColor = color.NRGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0x24}
+	} else {
+		shadow.StartColor = color.NRGBA{A: 0x24}
 	}
 	shadow.Refresh()
 }
@@ -191,15 +246,20 @@ func (v *newsView) render(snapshot articleSnapshot, err error) {
 }
 
 func (v *newsView) showArticles(articles []news.Article) {
+	v.showArticlesForVariant(articles, currentThemeVariant())
+}
+
+func (v *newsView) showArticlesForVariant(articles []news.Article, variant fyne.ThemeVariant) {
 	if sameArticles(v.rendered, articles) {
 		return
 	}
 	objects := make([]fyne.CanvasObject, len(articles))
 	for index, article := range articles {
-		objects[index] = articleRow(article, v.openArticle)
+		objects[index] = articleRowForVariant(article, v.openArticle, variant)
 	}
 	v.list.Objects = objects
 	v.rendered = slices.Clone(articles)
+	v.message = ""
 	v.list.Refresh()
 }
 
@@ -218,6 +278,7 @@ func sameArticles(left, right []news.Article) bool {
 
 func (v *newsView) showMessage(message string) {
 	v.rendered = nil
+	v.message = message
 	v.list.Objects = []fyne.CanvasObject{
 		container.NewPadded(richText(message, theme.ColorNameDisabled, theme.SizeNameText, false)),
 	}

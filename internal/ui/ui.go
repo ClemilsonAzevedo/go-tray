@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"sync"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
@@ -17,6 +19,23 @@ func Content(a fyne.App, service news.Service) *fyne.Container {
 	return newNewsContent(a, service)
 }
 
+func observeTheme(a fyne.App, onChange func(fyne.ThemeVariant)) {
+	var mu sync.Mutex
+	current := a.Settings().ThemeVariant()
+	a.Settings().AddListener(func(settings fyne.Settings) {
+		variant := settings.ThemeVariant()
+		mu.Lock()
+		changed := current != variant
+		current = variant
+		mu.Unlock()
+		if !changed {
+			return
+		}
+
+		fyne.Do(func() { onChange(a.Settings().ThemeVariant()) })
+	})
+}
+
 // PopoverSize returns the fixed size used by the tray window.
 func PopoverSize() fyne.Size {
 	return fyne.NewSize(popoverWidth, popoverHeight)
@@ -28,15 +47,12 @@ func iconButton(res fyne.Resource, fn func()) *widget.Button {
 	return b
 }
 
-func muted(text string, size float32, bold bool) *canvas.Text {
-	t := canvas.NewText(text, textMuted())
-	t.TextSize = size
-	t.TextStyle = fyne.TextStyle{Bold: bold}
-	return t
+func metadataText(text string, size float32, bold bool, colorName fyne.ThemeColorName) *canvas.Text {
+	return metadataTextForVariant(text, size, bold, colorName, currentThemeVariant())
 }
 
-func metadataText(text string, size float32, bold bool, colorName fyne.ThemeColorName) *canvas.Text {
-	t := canvas.NewText(text, systemColor(colorName))
+func metadataTextForVariant(text string, size float32, bold bool, colorName fyne.ThemeColorName, variant fyne.ThemeVariant) *canvas.Text {
+	t := canvas.NewText(text, systemColorForVariant(colorName, variant))
 	t.TextSize = size
 	t.TextStyle = fyne.TextStyle{Bold: bold}
 	return t

@@ -48,9 +48,19 @@ var (
 		"#F5F5F7",
 		`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`,
 	)
+	icEyeLight = svgIcon(
+		"eye-light",
+		"#625953",
+		`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`,
+	)
 	icEyePeach = svgIcon(
 		"eye-peach",
 		"#EDB299",
+		`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`,
+	)
+	icEyePeachLight = svgIcon(
+		"eye-peach-light",
+		"#E8AA90",
 		`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`,
 	)
 	icRefresh = smallSVGIcon("refresh", "#85858D", `<path d="M23 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/>`)
@@ -72,6 +82,11 @@ var (
 	icInfo = svgIcon(
 		"info",
 		"#A1A1A6",
+		`<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
+	)
+	icInfoLight = svgIcon(
+		"info-light",
+		"#786F69",
 		`<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
 	)
 )
